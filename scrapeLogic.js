@@ -15,7 +15,8 @@ const scrapeLogic = async (res) => {
         : puppeteer.executablePath(),
   });
   try {
-    await page.goto(`https://biblioreads.eu.org/search/${bookToSearch}?type=books`);
+    const page  = browser.newPage();
+    await page.goto(`https://biblioreads.eu.org/search/ramanujan?type=books`);
     await page.waitForSelector('#booksSearchResults', { visible: true, timeout: 60000 });
     const element = '#booksSearchResults a'
     const booksData = await page.$$eval(element, anchors => {
