@@ -15,31 +15,34 @@ const scrapeLogic = async (res) => {
         : puppeteer.executablePath(),
   });
   try {
-    const page = await browser.newPage();
+    await page.goto(`https://biblioreads.eu.org/search/${bookToSearch}?type=books`);
+    await page.waitForSelector('#booksSearchResults', { visible: true, timeout: 60000 });
+    const element = '#booksSearchResults a'
+    const booksData = await page.$$eval(element, anchors => {
+        const books = anchors.map(anchor => {
+            const title = anchor.querySelector('h3').textContent.trim();
+            const author = anchor.querySelector('p').textContent.trim();
+            const rating = anchor.querySelector('span.capitalize').textContent.trim();
+            const coverImage = `https://biblioreads.eu.org${anchor.querySelector('img').getAttribute('src')}`;
+            // const link = `https://biblioreads.eu.org${anchor.getAttribute('href')}`;
+            const link = anchor.getAttribute('href');
+            const bookInfo = {
+                title,
+                author,
+                rating,
+                coverImage,
+                link
+            };
 
-    await page.goto("https://developer.chrome.com/");
+            return bookInfo;
+        });
 
-    // Set screen size
-    await page.setViewport({ width: 1080, height: 1024 });
-
-    // Type into search box
-    await page.type(".search-box__input", "automate beyond recorder");
-
-    // Wait and click on first result
-    const searchResultSelector = ".search-box__link";
-    await page.waitForSelector(searchResultSelector);
-    await page.click(searchResultSelector);
-
-    // Locate the full title with a unique string
-    const textSelector = await page.waitForSelector(
-      "text/Customize and automate"
-    );
-    const fullTitle = await textSelector.evaluate((el) => el.textContent);
-
-    // Print the full title
-    const logStatement = `The title of this blog post is ${fullTitle}`;
-    console.log(logStatement);
-    res.send(logStatement);
+        return books;
+    });
+    const dataToSave = {
+        "data": booksData
+    };
+    res.send(dataToSave);
   } catch (e) {
     console.error(e);
     res.send(`Something went wrong while running Puppeteer: ${e}`);
