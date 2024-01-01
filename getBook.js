@@ -1,7 +1,12 @@
 const puppeteer = require("puppeteer");
 require("dotenv").config();
 
-const scrapeLogic = async (res) => {
+const getBook = async (req,res) => {
+  bookName=req.query.searchBook;
+  if(!bookName){
+    res.send(`pleasy type the book name`);
+    return;
+  }
   const browser = await puppeteer.launch({
     args: [
       "--disable-setuid-sandbox",
@@ -16,7 +21,7 @@ const scrapeLogic = async (res) => {
   });
   try {
     const page  = await browser.newPage();
-    await page.goto(`https://biblioreads.eu.org/search/ramanujan?type=books`);
+    await page.goto(`https://biblioreads.eu.org/search/${bookName}?type=books`);
     await page.waitForSelector('#booksSearchResults', { visible: true, timeout: 60000 });
     const element = '#booksSearchResults a'
     const booksData = await page.$$eval(element, anchors => {
@@ -52,4 +57,4 @@ const scrapeLogic = async (res) => {
   }
 };
 
-module.exports = { scrapeLogic };
+module.exports = { getBook };

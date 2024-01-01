@@ -1,11 +1,19 @@
 const express = require("express");
-const { scrapeLogic } = require("./scrapeLogic");
+const { searchBook } = require("./searchBook");
+const { getBook } = require("./getBook");
 const app = express();
 
 const PORT = process.env.PORT || 4000;
 
-app.get("/scrape", (req, res) => {
-  scrapeLogic(res);
+app.get("/searchBook", (req, res) => {
+  searchBook(req,res);
+});
+app.get("/getBook", (req, res) => {
+  getBook(req,res);
+});
+
+app.get("/getBook", (req, res) => {
+  getBook(req,res);
 });
 
 app.get("/", (req, res) => {
