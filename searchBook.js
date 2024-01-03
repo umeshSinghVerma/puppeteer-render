@@ -1,37 +1,4 @@
-async function GetAuthorData(authorUrl, browser) {
-  const newpage = await browser.newPage();
-  try {
-    console.log("this is the url", authorUrl);
-    const link = authorUrl.replace(/^"|"$/g, '');
-    await newpage.goto(link, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    await newpage.waitForSelector('#authorContent', { visible: true, timeout: 60000 });
-
-
-    const authorDescription = await newpage.evaluate(() => {
-      const bookDescriptionElement = document.querySelector('#authorContent #authorDescription > span');
-      if (bookDescriptionElement) {
-        let text = bookDescriptionElement.textContent.trim();
-        text = text.replace(/\(Show less\)$/, '').trim();
-        return text;
-      }
-      return '';
-    });
-    await newpage.close();
-    return authorDescription;
-
-  }
-  catch (err) {
-    if (err.name === 'TimeoutError') {
-      console.log("Timeout occurred, returning empty object");
-      return {}; // Returning an empty object
-    } else {
-      console.log(err);
-      return {}; // Catch other errors and return an empty object
-    }
-
-  }
-}
 const searchBook = async (req, res, browser) => {
   const url = req.query.bookUrl;
   if (!url) {
@@ -84,7 +51,7 @@ const searchBook = async (req, res, browser) => {
       }
       return '';
     });
-    const authorss = await page.evaluate(() => {
+    const authorLinks = await page.evaluate(() => {
       const sloganElement = document.querySelector('#sideContent div');
       let authors = [];
 
@@ -98,25 +65,10 @@ const searchBook = async (req, res, browser) => {
             authors.push(AuthorObject);
           }
         });
-        return authors;
-      }
-      return "jkhjk";
-    });
-
-    const finalAuthorArray = async function () {
-      let authors = [];
-      for (let i = 0; i < authorss.length; i++) {
-        let author = authorss[i];
-        let authorDescription = await GetAuthorData(author.url, browser);
-        let authorObject = {
-          authorName: author.name,
-          aboutAuthor: authorDescription
-        };
-        authors.push(authorObject);
       }
       return authors;
-    }
-    const AuthorDetails = await finalAuthorArray();
+    });
+
 
     const title = await page.evaluate(() => {
       const titleElement = document.querySelector('#sideContent h1');
@@ -145,23 +97,24 @@ const searchBook = async (req, res, browser) => {
       return '';
     });
 
-    const dataToSave = {
-      "topics": topics,
-      "description": description,
-      "rating": bookRating,
-      "slogan": slogan,
-      "title": title,
-      "author": author,
-      "AuthorDetails": AuthorDetails,
-      "imgUrl": `https://biblioreads.eu.org${imgUrl}`
-    };
-    res.send(dataToSave)
-    await page.close();
-    return dataToSave;
-  } catch (e) {
-    console.error(e);
-    res.send(`Something went wrong while running Puppeteer: ${e}`);
-  }
-};
 
-module.exports = { searchBook };
+      const dataToSave = {
+        "topics": topics,
+        "description": description,
+        "rating": bookRating,
+        "slogan": slogan,
+        "title": title,
+        "author": author,
+        "authorLinks": authorLinks,
+        "imgUrl": `https://biblioreads.eu.org${imgUrl}`
+      };
+      res.send(dataToSave)
+      await page.close();
+      return dataToSave;
+    } catch (e) {
+      console.error(e);
+      res.send(`Something went wrong while running Puppeteer: ${e}`);
+    }
+  };
+
+  module.exports = { searchBook };
