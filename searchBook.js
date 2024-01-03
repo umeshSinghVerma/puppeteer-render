@@ -1,5 +1,3 @@
-const puppeteer = require("puppeteer");
-require("dotenv").config();
 async function GetAuthorData(authorUrl, browser) {
   const newpage = await browser.newPage();
   try {
@@ -19,6 +17,7 @@ async function GetAuthorData(authorUrl, browser) {
       }
       return '';
     });
+    await newpage.close();
     return authorDescription;
 
   }
@@ -33,24 +32,12 @@ async function GetAuthorData(authorUrl, browser) {
 
   }
 }
-const searchBook = async (req, res) => {
+const searchBook = async (req, res, browser) => {
   const url = req.query.bookUrl;
   if (!url) {
     res.send(`pleasy type the book url`);
     return;
   }
-  const browser = await puppeteer.launch({
-    args: [
-      "--disable-setuid-sandbox",
-      "--no-sandbox",
-      "--single-process",
-      "--no-zygote",
-    ],
-    executablePath:
-      process.env.NODE_ENV === "production"
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath(),
-  });
   try {
     const page = await browser.newPage();
 
@@ -169,13 +156,11 @@ const searchBook = async (req, res) => {
       "imgUrl": `https://biblioreads.eu.org${imgUrl}`
     };
     res.send(dataToSave)
-
+    await page.close();
     return dataToSave;
   } catch (e) {
     console.error(e);
     res.send(`Something went wrong while running Puppeteer: ${e}`);
-  } finally {
-    await browser.close();
   }
 };
 

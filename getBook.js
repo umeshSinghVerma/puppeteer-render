@@ -1,24 +1,9 @@
-const puppeteer = require("puppeteer");
-require("dotenv").config();
-
-const getBook = async (req,res) => {
+const getBook = async (req,res,browser) => {
   bookName=req.query.searchBook;
   if(!bookName){
     res.send(`pleasy type the book name`);
     return;
   }
-  const browser = await puppeteer.launch({
-    args: [
-      "--disable-setuid-sandbox",
-      "--no-sandbox",
-      "--single-process",
-      "--no-zygote",
-    ],
-    executablePath:
-      process.env.NODE_ENV === "production"
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath(),
-  });
   try {
     const page  = await browser.newPage();
     await page.goto(`https://biblioreads.eu.org/search/${bookName}?type=books`);
@@ -49,11 +34,10 @@ const getBook = async (req,res) => {
         "data": booksData
     };
     res.send(dataToSave);
+    await page.close();
   } catch (e) {
     console.error(e);
     res.send(`Something went wrong while running Puppeteer: ${e}`);
-  } finally {
-    await browser.close();
   }
 };
 
